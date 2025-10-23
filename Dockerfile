@@ -1,9 +1,9 @@
-# Base image: Ubuntu 16.04 (Xenial) for legacy PyQt4 support
+# Base image: Ubuntu 16.04 (Xenial)
 FROM ubuntu:16.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Install all system and Python dependencies
+# 1. Install all system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-dev \
@@ -37,10 +37,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
-# 2. Upgrade pip, setuptools, and wheel to versions compatible with Python 3.5
-RUN python3 -m pip install --upgrade "pip<=21.3.1" "setuptools<59" "wheel<0.38"
+# 2. Pin pip/setuptools/wheel to Python 3.5–compatible versions
+# pip 20.3.4 is the last version that supports Python 3.5
+RUN python3 -m pip install --upgrade "pip==20.3.4" "setuptools<45" "wheel<0.34"
 
-# 3. Build and install DART v6.2.1 from source
+# 3. Build and install DART v6.2.1
 WORKDIR /opt
 RUN git clone https://github.com/dartsim/dart.git && \
     cd dart && \
@@ -54,15 +55,15 @@ RUN git clone https://github.com/dartsim/dart.git && \
     cd / && \
     rm -rf /opt/dart
 
-# 4. Install Python packages (install numpy first, as required by other packages)
+# 4. Install Python dependencies
+# Install numpy first to avoid build dependency mismatches
 RUN python3 -m pip install "numpy<=1.14.5"
 RUN python3 -m pip install \
     click \
     pydart2 \
     tensorflow==1.9
 
-# 5. Set the working directory for project code
+# 5. Working directory
 WORKDIR /app
 
-# 6. Default command
 CMD ["bash"]
