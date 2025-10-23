@@ -28,8 +28,8 @@ jobs:
       packages: write
       contents: read
     with:
-      build_context: .devcontainer
-      dockerfile: .devcontainer/Dockerfile
+      build_context: .
+      dockerfile: ./Dockerfile
       image_name: yolo_realsense
       image_version: ${{ needs.get_tags.outputs.image_version }}
       # Changed to a standard x86 runner
