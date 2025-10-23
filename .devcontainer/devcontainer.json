@@ -1,0 +1,42 @@
+{
+  "name": "Purdue Flappy Simulation Dev",
+  "image": "flappy_env:latest",
+
+  // Optional runtime settings
+  "runArgs": [
+    "--network=host"
+  ],
+
+  // Environment variables
+  "containerEnv": {
+    "DISPLAY": "${env:DISPLAY}",
+    "OMP_NUM_THREADS": "4",
+    "PYTHONUNBUFFERED": "1"
+  },
+
+  // Workspace mounting
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "twxs.cmake",
+        "ms-vscode.cpptools",
+        "ms-toolsai.jupyter"
+      ],
+      "settings": {
+        "python.pythonPath": "/usr/bin/python3",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // Run user
+  "remoteUser": "root",
+
+  // Post-creation command (optional)
+  "postCreateCommand": ""
+}
