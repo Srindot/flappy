@@ -1,22 +1,19 @@
-# Base image: Ubuntu 16.04 (Xenial)
-# Required for 'python3-pyqt4'
+# Base image: Ubuntu 16.04 (Xenial) for legacy PyQt4 support
 FROM ubuntu:16.04
 
-# Set non-interactive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Install ALL System Dependencies (for DART, Python, and Flappy)
+# 1. Install all system and Python dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # For Python
     python3 \
     python3-dev \
+    python3-pip \
+    ca-certificates \
     curl \
-    # For DART (build tools)
     build-essential \
     cmake \
     pkg-config \
     git \
-    # For DART (libraries)
     libeigen3-dev \
     libassimp-dev \
     libboost-regex-dev \
@@ -28,32 +25,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtinyxml2-dev \
     liburdfdom-dev \
     liburdfdom-headers-dev \
-    # CRITICAL FIX 1: DART's GUI dependencies (fixes LoadGlut.hpp)
     freeglut3-dev \
     libxi-dev \
     libxmu-dev \
-    # CRITICAL FIX 2: DART's Optimizer dependency (fixes -ldart-optimizer-nlopt)
     libnlopt-dev \
-    # For Flappy (from README)
     libopenmpi-dev \
     zlib1g-dev \
     swig \
     python3-pyqt4 \
     python3-pyqt4.qtopengl \
-# Clean up apt cache
-&& rm -rf /var/lib/apt/lists/*
+ && update-ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 
-# 2. CRITICAL FIX 3: Manually install the correct pip/setuptools/wheel for Python 3.5
-#    (This fixes all the Python 3.5 SyntaxError problems)
-RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py -o get-pip.py
-RUN python3 get-pip.py \
-    "pip<=21.3.1" \
-    "setuptools<59" \
-    "wheel<0.38"
-RUN rm get-pip.py
+# 2. Upgrade pip, setuptools, and wheel to versions compatible with Python 3.5
+RUN python3 -m pip install --upgrade "pip<=21.3.1" "setuptools<59" "wheel<0.38"
 
-# 3. Install DART v6.2.1 from source
-#    (This will now build correctly with GUI and Optimizer support)
+# 3. Build and install DART v6.2.1 from source
 WORKDIR /opt
 RUN git clone https://github.com/dartsim/dart.git && \
     cd dart && \
@@ -67,16 +54,15 @@ RUN git clone https://github.com/dartsim/dart.git && \
     cd / && \
     rm -rf /opt/dart
 
-# 4. CRITICAL FIX 4: Install Python Packages in the correct order
-#    (Install numpy first to fix the numpy/arrayobject.h error)
-RUN pip3 install "numpy<=1.14.5"
-RUN pip3 install \
+# 4. Install Python packages (install numpy first, as required by other packages)
+RUN python3 -m pip install "numpy<=1.14.5"
+RUN python3 -m pip install \
     click \
     pydart2 \
     tensorflow==1.9
 
-# 5. Set the final working directory for the dev container
+# 5. Set the working directory for project code
 WORKDIR /app
 
-# Set a default command to keep the container running
+# 6. Default command
 CMD ["bash"]
