@@ -1,6 +1,6 @@
 {
   "name": "Purdue Flappy Simulation Dev",
-  "image": "flappy_env:latest",
+  "image": "flappy-env:latest",
 
   // Optional runtime settings
   "runArgs": [

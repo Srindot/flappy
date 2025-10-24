@@ -8,7 +8,8 @@
 
 import numpy as np
 import random
-from fwmav import FWMAV
+from flappy.envs.fwmav import FWMAV
+
 import pydart2 as pydart
 import threading
 import click

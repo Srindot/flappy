@@ -1,9 +1,13 @@
-# Base image: Ubuntu 16.04 (Xenial)
+# ------------------------------------------------------------------
+# Purdue Flappy Simulation Environment (Ubuntu 16.04 / Python 3.5)
+# ------------------------------------------------------------------
 FROM ubuntu:16.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Install all system dependencies
+# ------------------------------------------------------------------
+# 1. System and Core Build Dependencies
+# ------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-dev \
@@ -14,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     pkg-config \
     git \
+    software-properties-common \
     libeigen3-dev \
     libassimp-dev \
     libboost-regex-dev \
@@ -34,36 +39,52 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     swig \
     python3-pyqt4 \
     python3-pyqt4.qtopengl \
- && update-ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+ && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# 2. Pin pip/setuptools/wheel to Python 3.5–compatible versions
-# pip 20.3.4 is the last version that supports Python 3.5
+# ------------------------------------------------------------------
+# 2. Fix and Pin Python Tools (Python 3.5-compatible versions)
+# ------------------------------------------------------------------
 RUN python3 -m pip install --upgrade "pip==20.3.4" "setuptools<45" "wheel<0.34"
 
-# 3. Build and install DART v6.2.1
+# ------------------------------------------------------------------
+# 3. Install DART v6.2.1 (from source)
+# ------------------------------------------------------------------
 WORKDIR /opt
 RUN git clone https://github.com/dartsim/dart.git && \
     cd dart && \
     git checkout tags/v6.2.1 && \
-    mkdir build && \
-    cd build && \
+    mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig && \
-    cd / && \
-    rm -rf /opt/dart
+    make -j$(nproc) && make install && ldconfig && \
+    cd / && rm -rf /opt/dart
 
-# 4. Install Python dependencies
-# Install numpy first to avoid build dependency mismatches
-RUN python3 -m pip install "numpy<=1.14.5"
-RUN python3 -m pip install \
+# ------------------------------------------------------------------
+# 4. Install PyDART2 (requires DART libs via official PPA)
+# ------------------------------------------------------------------
+RUN apt-get update && apt-get install -y software-properties-common && \
+    add-apt-repository ppa:dartsim/ppa && \
+    apt-get update && \
+    apt-get install -y libdart6-all-dev swig && \
+    python3 -m pip install --no-cache-dir pydart2==0.3.11
+
+# ------------------------------------------------------------------
+# 5. Core Python Dependencies for Flappy
+# ------------------------------------------------------------------
+RUN python3 -m pip install --no-cache-dir "numpy<=1.14.5"
+RUN python3 -m pip install --no-cache-dir \
     click \
-    pydart2 \
-    tensorflow==1.9
+    tensorflow==1.9 \
+    stable-baselines==2.10.2 \
+    "gym==0.17.3" \
+    "cloudpickle==1.6.0" \
+    "pyglet<=1.5.0" \
+    "Pillow==7.2.0" \
+    "scipy==1.4.1"
 
-# 5. Working directory
-WORKDIR /app
+# ------------------------------------------------------------------
+# 6. Final Environment Setup
+# ------------------------------------------------------------------
+WORKDIR /workspace
+ENV PYTHONPATH=/workspace:$PYTHONPATH
 
 CMD ["bash"]
