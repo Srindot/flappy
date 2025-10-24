@@ -6,7 +6,7 @@ FROM ubuntu:16.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------------------------------------------
-# 1. Core System and GUI Dependencies
+# 1. Core System + GUI + Build Dependencies
 # ------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-dev python3-pip \
@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfcl-dev libode-dev libtinyxml2-dev \
     libglew-dev libgl1-mesa-dev libosg-dev \
     libosgViewer-dev libosgGA-dev libosgDB-dev \
-    python3-pyqt4 python3-pyqt4.qtopengl \
  && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------
@@ -27,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m pip install --upgrade "pip==20.3.4" "setuptools<45" "wheel<0.34"
 
 # ------------------------------------------------------------------
-# 3. Build and install DART v6.1.2 (with GUI enabled)
+# 3. Build and install DART v6.1.2 (with GUI enabled)
 # ------------------------------------------------------------------
 WORKDIR /opt
 RUN git clone https://github.com/dartsim/dart.git && \
@@ -41,23 +40,27 @@ RUN git clone https://github.com/dartsim/dart.git && \
     cd / && rm -rf /opt/dart
 
 # ------------------------------------------------------------------
-# 4. Build PyDART2 against installed DART
+# 4. Build PyDART2 against installed DART (verified build path)
 # ------------------------------------------------------------------
 RUN python3 -m pip install --no-cache-dir pydart2==0.3.11
 
 # ------------------------------------------------------------------
-# 5. RL Stack and Simulation Dependencies
+# 5. Simulation and RL Dependencies
 # ------------------------------------------------------------------
+# Numpy first for stable builds
 RUN python3 -m pip install --no-cache-dir "numpy<=1.14.5"
+
+# Reinforcement learning + rendering requirements
 RUN python3 -m pip install --no-cache-dir \
     click tensorflow==1.9 stable-baselines==2.10.2 \
     "gym==0.17.3" "cloudpickle==1.6.0" \
-    "pyglet<=1.5.0" "Pillow==7.2.0" "scipy==1.4.1"
+    "pyglet<=1.5.0" "Pillow==7.2.0" "scipy==1.4.1" \
+    "PyQt5<=5.15.2"
 
 # ------------------------------------------------------------------
-# 6. Final Environment Setup
+# 6. Final Workspace Setup
 # ------------------------------------------------------------------
 WORKDIR /workspace
-ENV PYTHONPATH=/workspace:$PYTHONPATH
+ENV PYTHONPATH=/workspace
 
 CMD ["bash"]
